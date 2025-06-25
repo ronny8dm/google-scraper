@@ -1,0 +1,117 @@
+@model superScrape.Models.ScrapingRequest
+@{
+    ViewData["Title"] = "Google Maps Business Scraper";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Google Maps Business Scraper
+                        </h2>
+                        <a href="@Url.Action("Screenshots")" class="btn btn-light btn-sm">
+                            <i class="fas fa-camera"></i> Debug Screenshots
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-4">
+                        Enter a search query to scrape business listings from Google Maps.
+                        For example: "restaurants in London", "dentists near me", "coffee shops in New York".
+                    </p>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+
+                    <form asp-action="Scrape" method="post" id="scrapeForm">
+                        <div class="mb-3">
+                            <label asp-for="Query" class="form-label">Search Query</label>
+                            <input asp-for="Query" class="form-control form-control-lg"
+                                placeholder="e.g., restaurants in London" autocomplete="off" required>
+                            <div class="form-text">
+                                Enter what you want to search for on Google Maps
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="MaxResults" class="form-label">Maximum Results</label>
+                            <select asp-for="MaxResults" class="form-select">
+                                <option value="10">10 results</option>
+                                <option value="20" selected>20 results</option>
+                                <option value="50">50 results</option>
+                                <option value="100">100 results</option>
+                            </select>
+                            <div class="form-text">
+                                More results will take longer to scrape
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="scrapeBtn">
+                                <i class="fas fa-search me-2"></i>
+                                Start Scraping
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="loadingIndicator" style="display: none;" class="text-center mt-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Scraping in progress... This may take a few minutes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                            <h5>Automated</h5>
+                            <p class="card-text small">Uses headless browser automation to extract data</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-download fa-2x text-success mb-2"></i>
+                            <h5>Export Ready</h5>
+                            <p class="card-text small">Download results as CSV for further analysis</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                            <h5>Respectful</h5>
+                            <p class="card-text small">Includes delays and follows best practices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('scrapeForm').addEventListener('submit', function () {
+        document.getElementById('scrapeBtn').disabled = true;
+        document.getElementById('loadingIndicator').style.display = 'block';
+    });
+</script>
+                 

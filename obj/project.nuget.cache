@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "BwpjVT0eh5Y=",
+  "success": true,
+  "projectFilePath": "/Users/coderxx08/development/superScrape/superScrape.csproj",
+  "expectedPackageFiles": [
+    "/Users/coderxx08/.nuget/packages/htmlagilitypack/1.11.57/htmlagilitypack.1.11.57.nupkg.sha512",
+    "/Users/coderxx08/.nuget/packages/microsoft.bcl.asyncinterfaces/6.0.0/microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
+    "/Users/coderxx08/.nuget/packages/microsoft.playwright/1.40.0/microsoft.playwright.1.40.0.nupkg.sha512",
+    "/Users/coderxx08/.nuget/packages/system.componentmodel.annotations/5.0.0/system.componentmodel.annotations.5.0.0.nupkg.sha512",
+    "/Users/coderxx08/.nuget/packages/system.runtime.compilerservices.unsafe/6.0.0/system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "/Users/coderxx08/.nuget/packages/system.text.encodings.web/6.0.0/system.text.encodings.web.6.0.0.nupkg.sha512",
+    "/Users/coderxx08/.nuget/packages/system.text.json/6.0.0/system.text.json.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
