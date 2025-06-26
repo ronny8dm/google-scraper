@@ -2,5 +2,6 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <Import Project="$(NuGetPackageRoot)microsoft.playwright/1.40.0/buildTransitive/Microsoft.Playwright.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.playwright/1.40.0/buildTransitive/Microsoft.Playwright.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.extensions.logging.abstractions/6.0.3/buildTransitive/netcoreapp3.1/Microsoft.Extensions.Logging.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.extensions.logging.abstractions/6.0.3/buildTransitive/netcoreapp3.1/Microsoft.Extensions.Logging.Abstractions.targets')" />
   </ImportGroup>
 </Project>

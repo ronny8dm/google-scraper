@@ -1,58 +1,8 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "System Health";
 }
 
-<div class="text-center">
-    <h1 class="display-4">
-        <i class="fas fa-map-marked-alt text-primary me-3"></i>
-        SuperScrape
-    </h1>
-    <p class="lead">Advanced Google Maps Business Listing Scraper</p>
-    <p>Extract business information from Google Maps with ease. Search for any type of business in any location and get
-        detailed information including contact details, ratings, reviews, and more.</p>
-
-    <div class="row mt-5">
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-search fa-3x text-primary mb-3"></i>
-                    <h5>Smart Search</h5>
-                    <p>Enter natural language queries like "restaurants in London" or "dentists near me"</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-database fa-3x text-success mb-3"></i>
-                    <h5>Rich Data</h5>
-                    <p>Extract names, addresses, phone numbers, websites, ratings, and reviews</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-download fa-3x text-info mb-3"></i>
-                    <h5>Export Ready</h5>
-                    <p>Download results as CSV files for analysis in Excel or other tools</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-5">
-        <a class="btn btn-primary btn-lg" asp-controller="Scraper" asp-action="Index">
-            <i class="fas fa-rocket me-2"></i>
-            Start Scraping Now
-        </a>
-    </div>
-
-    <div class="mt-4">
-        <small class="text-muted">
-            Built with ASP.NET Core and Playwright for reliable, headless browser automation
-        </small>
-    </div>
+<div class="container mt-4">
+    <h2><i class="fas fa-heartbeat text-danger"></i> System Health</h2>
+    
 </div>
-
-   

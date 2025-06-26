@@ -18,9 +18,7 @@
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/rjimswa.dswa.cache.json
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/rjsmrazor.dswa.cache.json
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json
-/Users/coderxx08/development/superScrape/obj/Debug/net9.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/scopedcss/bundle/superScrape.styles.css
-/Users/coderxx08/development/superScrape/obj/Debug/net9.0/scopedcss/projectbundle/superScrape.bundle.scp.css
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/xujalhrofv-b9sayid5wm.gz
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/p5jo3mcuvg-61n19gt1b8.gz
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/xb6ccqa09z-xtxxf3hu2r.gz
@@ -83,8 +81,6 @@
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/rln8428uw0-muycvpuwrr.gz
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/i6y3gfyipu-87fc7y1x7t.gz
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/j4yoyh4ip5-mlv21k5csn.gz
-/Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/5dnqpvxnnc-w2v2lngnol.gz
-/Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/4vj6ujxr90-w2v2lngnol.gz
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/staticwebassets.build.json
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/staticwebassets.build.json.cache
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/staticwebassets.development.json
@@ -398,3 +394,16 @@
 /Users/coderxx08/development/superScrape/bin/Debug/net9.0/Microsoft.Playwright.dll
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/superScrape.csproj.AssemblyReference.cache
 /Users/coderxx08/development/superScrape/obj/Debug/net9.0/superScr.791CCBB5.Up2Date
+/Users/coderxx08/development/superScrape/obj/Debug/net9.0/superScrape.sourcelink.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/frontend/package.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/frontend/tsconfig.app.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/frontend/tsconfig.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/frontend/tsconfig.node.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/frontend/components.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/frontend/package-lock.json
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/AspNetCoreRateLimit.dll
+/Users/coderxx08/development/superScrape/bin/Debug/net9.0/Newtonsoft.Json.dll
+/Users/coderxx08/development/superScrape/obj/Debug/net9.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
+/Users/coderxx08/development/superScrape/obj/Debug/net9.0/scopedcss/projectbundle/superScrape.bundle.scp.css
+/Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/5dnqpvxnnc-w2v2lngnol.gz
+/Users/coderxx08/development/superScrape/obj/Debug/net9.0/compressed/4vj6ujxr90-w2v2lngnol.gz
