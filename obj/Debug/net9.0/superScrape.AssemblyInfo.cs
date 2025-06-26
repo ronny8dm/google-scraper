@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("superScrape")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d8352176f2f4214125edc0e423d534233890a41e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+953ae020f522abc4ea2c12c3473667b39362b168")]
 [assembly: System.Reflection.AssemblyProductAttribute("superScrape")]
 [assembly: System.Reflection.AssemblyTitleAttribute("superScrape")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

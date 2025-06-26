@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, Download, MapPin, Phone, Globe, Star, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { Download, MapPin, Phone, Globe, Star, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -25,7 +25,7 @@ interface BusinessTableProps {
   onExportCsv?: () => void
 }
 
-export function BusinessTable({ businesses, query, onExportCsv }: BusinessTableProps) {
+export function BusinessTable({ businesses, onExportCsv }: BusinessTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
 
   const toggleRow = (index: number) => {

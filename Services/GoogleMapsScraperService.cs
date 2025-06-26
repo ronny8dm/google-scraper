@@ -220,7 +220,7 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                 }
             }
 
-            var processedCount = 0;
+            
             var businesses = new List<BusinessListing>();
 
             await page.Locator("[role=feed]").HoverAsync();
@@ -275,7 +275,7 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
         var targetResults = actualElementCount;
         _logger.LogInformation("*** business counts ****, target: {ActualCount}, actual elements: {ActualCount}",
             targetResults, actualElementCount);
-        const int BATCH_SIZE = 5;
+        
 
         try
         {
