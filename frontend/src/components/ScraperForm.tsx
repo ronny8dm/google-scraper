@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom"
 const apiClient = axios.create({
   baseURL: 'https://scrapeapi.ronnyjdiaz.com/',
   timeout: 300000,
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
