@@ -1,21 +1,26 @@
 {
-  "AWSEBDockerrunVersion": 1,
-  "containerDefinitions": [
-    {
-      "name": "super-scrape-api",
-      "Image": {
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
     "Name": "354918395068.dkr.ecr.eu-west-2.amazonaws.com/super-scrape-api:latest",
     "Update": "true"
   },
-      "essential": true,
-      "memory": 512,
-      "portMappings": [
-        { "hostPort": 80, "containerPort": 80 }
-      ],
-      "environment": [
-        { "name": "ASPNETCORE_ENVIRONMENT", "value": "Production" },
-        { "name": "PLAYWRIGHT_BROWSERS_PATH", "value": "/ms-playwright" }
-      ]
+  "Ports": [
+    {
+      "ContainerPort": "80"
+    }
+  ],
+  "Environment": [
+    {
+      "Name": "ASPNETCORE_ENVIRONMENT",
+      "Value": "Production"
+    },
+    {
+      "Name": "PLAYWRIGHT_BROWSERS_PATH",
+      "Value": "/ms-playwright"
+    },
+    {
+      "Name": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
+      "Value": "1"
     }
   ]
 }
