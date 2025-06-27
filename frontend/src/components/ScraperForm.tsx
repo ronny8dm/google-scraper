@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useNavigate } from "react-router-dom"
 
 const apiClient = axios.create({
-  baseURL: 'http://ec2-3-8-194-108.eu-west-2.compute.amazonaws.com',
+  baseURL: 'https://scrapeapi.ronnyjdiaz.com/',
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
