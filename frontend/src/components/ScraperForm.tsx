@@ -13,11 +13,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useNavigate } from "react-router-dom"
 
 const apiClient = axios.create({
-  baseURL: 'http://superscrape-env.eba-myrv2mb6.eu-central-1.elasticbeanstalk.com/',
+  baseURL: 'https://superscrape-116e3847ada7.herokuapp.com',
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'Access-Control-Allow-Origin': '*', // Allow all origins for CORS
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
   }
 })
 

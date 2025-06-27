@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright/dotnet:v1.52.0-noble AS base
+FROM mcr.microsoft.com/playwright/dotnet:v1.40.0-noble AS base
 
 # Install additional tools and latest .NET 9
 RUN apt-get update && apt-get install -y \

@@ -46,7 +46,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", builder =>
     {
-        builder.WithOrigins("https://superscrape.ronnyjdiaz.com")
+        builder.WithOrigins("*")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
