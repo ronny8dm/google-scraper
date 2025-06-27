@@ -39,7 +39,7 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
             _logger.LogInformation("Starting to scrape Google Maps for query: {Query}", query);
 
             using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions
+            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = true,
                 SlowMo = 100,

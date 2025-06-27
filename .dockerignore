@@ -1,0 +1,15 @@
+.git
+.github
+.gitignore
+.vs
+.vscode
+obj/
+bin/
+**/obj/
+**/bin/
+**/*.user
+**/*.suo
+**/.DS_Store
+Dockerfile
+.dockerignore
+README.md
