@@ -9,16 +9,21 @@ namespace superScrape.Controllers;
 public class ScraperApiController : ControllerBase
 {
     private readonly IGoogleMapsScraperService _scraperService;
+    private readonly IBackgroundJobService _backgroundJobService;
     private readonly ILogger<ScraperApiController> _logger;
 
-    public ScraperApiController(IGoogleMapsScraperService scraperService, ILogger<ScraperApiController> logger)
+    public ScraperApiController(
+        IGoogleMapsScraperService scraperService, 
+        IBackgroundJobService backgroundJobService,
+        ILogger<ScraperApiController> logger)
     {
         _scraperService = scraperService;
+        _backgroundJobService = backgroundJobService;
         _logger = logger;
     }
 
     [HttpPost("scrape")]
-    public async Task<ActionResult<ScrapingResult>> Scrape([FromBody] ScrapingRequest request)
+    public ActionResult<JobResponse> Scrape([FromBody] ScrapingRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Query))
         {
@@ -32,20 +37,36 @@ public class ScraperApiController : ControllerBase
 
         try
         {
-            _logger.LogInformation("API: Starting scraping for query: {Query}, MaxResults: {MaxResults}",
+            _logger.LogInformation("API: Enqueueing scraping job for query: {Query}, MaxResults: {MaxResults}",
                 request.Query, request.MaxResults);
 
-            var result = await _scraperService.ScrapBusinessListingsAsync(request.Query, request.MaxResults);
+            // Enqueue the job instead of running it synchronously
+            string jobId = _backgroundJobService.EnqueueScrapingJob(request.Query, request.MaxResults);
 
-            _logger.LogInformation("API: Scraping completed. Success: {Success}, Found: {Count} businesses",
-                result.Success, result.Businesses.Count);
-
-            return Ok(result);
+            return Ok(new JobResponse 
+            { 
+                JobId = jobId,
+                Status = "queued",
+                Message = "Your scraping job has been queued. Use the /job/{jobId} endpoint to check status."
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "API: Error during scraping process");
+            _logger.LogError(ex, "API: Error during job creation");
             return StatusCode(500, new { error = ex.Message });
         }
+    }
+    
+    [HttpGet("job/{jobId}")]
+    public async Task<ActionResult<ScrapingResult>> GetJobResult(string jobId)
+    {
+        var result = await _backgroundJobService.GetJobResultAsync(jobId);
+        
+        if (result == null)
+        {
+            return NotFound(new { error = "Job not found" });
+        }
+        
+        return Ok(result);
     }
 }

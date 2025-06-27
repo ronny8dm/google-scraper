@@ -4,7 +4,7 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
 
 builder.WebHost.UseUrls($"http://*:{port}");
 builder.Services.AddMemoryCache();
@@ -39,9 +39,15 @@ builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrateg
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-// Register the Google Maps scraper service
 builder.Services.AddScoped<IGoogleMapsScraperService, GoogleMapsScraperService>();
+
+// 2. Then register the factory that depends on the service provider
+builder.Services.AddSingleton<IScraperServiceFactory, ScraperServiceFactory>();
+
+// 3. Finally register the background service that depends on the factory
+builder.Services.AddSingleton<IBackgroundJobService, BackgroundJobService>();
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", builder =>

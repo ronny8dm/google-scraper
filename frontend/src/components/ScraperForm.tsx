@@ -31,6 +31,7 @@ export default function ScraperForm() {
   const [maxResults, setMaxResults] = useState("20")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,21 +48,59 @@ export default function ScraperForm() {
     try {
       console.log("Starting scrape with:", { searchQuery, maxResults })
       
-      const response = await apiClient.post('/api/scraperapi/scrape', {
+      // Initial job submission
+      const jobResponse = await apiClient.post('/api/scraperapi/scrape', {
         query: searchQuery,
         maxResults: parseInt(maxResults)
       })
-
-      console.log("Scraping completed:", response.data)
       
-      // Navigate to results page with the data
-      navigate('/results', { 
-        state: { 
-          results: response.data,
-          query: searchQuery,
-          maxResults: parseInt(maxResults)
+      const jobId = jobResponse.data.jobId
+      
+      // Set polling interval for job status
+      const maxAttempts = 60 // 5 minutes (5s intervals)
+      let attempts = 0
+      
+      // Display status to user
+      setStatusMessage(`Job queued with ID: ${jobId}. Waiting for results...`)
+      
+      const checkJobStatus = async () => {
+        try {
+          const statusResponse = await apiClient.get(`/api/scraperapi/job/${jobId}`)
+          
+          // If job is still processing, check again after delay
+          if (!statusResponse.data.success && statusResponse.data.errorMessage?.includes("still")) {
+            attempts++
+            if (attempts < maxAttempts) {
+              setTimeout(checkJobStatus, 5000) // Check every 5 seconds
+              setStatusMessage(`Job in progress (${attempts}/${maxAttempts})... Please wait.`)
+            } else {
+              setError("Job is taking too long. Please check back later with job ID: " + jobId)
+              setLoading(false)
+            }
+          } else {
+            // Job completed, process results
+            console.log("Scraping completed:", statusResponse.data)
+            setLoading(false)
+            
+            // Navigate to results page with the data
+            navigate('/results', { 
+              state: { 
+                results: statusResponse.data,
+                query: searchQuery,
+                maxResults: parseInt(maxResults)
+              }
+            })
+          }
+        } catch (err) {
+          console.error('Error checking job status:', err)
+          setError('Failed to check job status. Please try again later.')
+          setLoading(false)
         }
-      })
+      }
+      
+      // Start checking job status
+      setTimeout(checkJobStatus, 2000)
+      
     } catch (err) {
       console.error('Scraping error:', err)
       
@@ -105,6 +144,15 @@ export default function ScraperForm() {
           <Alert className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
             <AlertDescription className="text-red-800 dark:text-red-200">
               <strong>Error:</strong> {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Status Message */}
+        {statusMessage && (
+          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              {statusMessage}
             </AlertDescription>
           </Alert>
         )}
