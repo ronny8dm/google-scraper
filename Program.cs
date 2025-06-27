@@ -55,7 +55,8 @@ builder.Services.AddCors(options =>
     {
         builder.WithOrigins("https://superscrape.ronnyjdiaz.com")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowAnyOrigin();
     });
 });
 
