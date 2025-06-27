@@ -1,0 +1,18 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "super-scrape-api",
+      "image": "354918395068.dkr.ecr.eu-west-2.amazonaws.com/super-scrape-api:latest",
+      "essential": true,
+      "memory": 512,
+      "portMappings": [
+        { "hostPort": 80, "containerPort": 80 }
+      ],
+      "environment": [
+        { "name": "ASPNETCORE_ENVIRONMENT", "value": "Production" },
+        { "name": "PLAYWRIGHT_BROWSERS_PATH", "value": "/ms-playwright" }
+      ]
+    }
+  ]
+}
