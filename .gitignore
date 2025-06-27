@@ -2,3 +2,7 @@ publish
 bin
 obj
 superScrape-deployment.zip
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
