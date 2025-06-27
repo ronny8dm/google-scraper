@@ -85,6 +85,8 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
             });
 
             page = await context.NewPageAsync();
+            page.SetDefaultTimeout(10_000);
+            page.SetDefaultNavigationTimeout(15_000);
 
             await context.AddCookiesAsync(new[]
             {
