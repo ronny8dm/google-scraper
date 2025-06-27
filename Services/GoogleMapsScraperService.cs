@@ -16,13 +16,16 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
     private readonly ILogger<GoogleMapsScraperService> _logger;
     private readonly IWebHostEnvironment _environment;
     
+    private readonly IUtils _utils;
+    
 
-    public GoogleMapsScraperService(ILogger<GoogleMapsScraperService> logger, IWebHostEnvironment environment)
+    public GoogleMapsScraperService(ILogger<GoogleMapsScraperService> logger, IWebHostEnvironment environment, IUtils utils)
     {
         _logger = logger;
         _environment = environment;
-      
+        _utils = utils;
     }
+    
 
     public async Task<ScrapingResult> ScrapBusinessListingsAsync(string query, int maxResults = 100)
     {
@@ -151,7 +154,11 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                 }
             }
 
-            await page.ClickAsync("button:has-text('Accept all')");
+            var screenshot = await page.ScreenshotAsync(new() { Path = "wwwroot/screenshots/consent.png", FullPage = true, Type = ScreenshotType.Png });
+          
+            _logger.LogInformation("📸 Consent screenshot (screenshot): {screenshot}", screenshot);           
+
+            await _utils.HandleGoogleConsentPopup(page);
 
             await Task.Delay(Random.Shared.Next(2000, 4000));
 
