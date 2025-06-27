@@ -42,7 +42,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", builder =>
     {
-        builder.WithOrigins("http://localhost:5173") // Vite default port
+        builder.WithOrigins("https://superscrape.ronnyjdiaz.com")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
