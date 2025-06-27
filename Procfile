@@ -1,1 +1,1 @@
-web: dotnet superScrape.dll
+web: dotnet superScrape.dll --urls=http://*:$PORT

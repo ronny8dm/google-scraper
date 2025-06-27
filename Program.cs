@@ -1,8 +1,12 @@
 using superScrape.Services;
 using AspNetCoreRateLimit;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+
+builder.WebHost.UseUrls($"http://*:{port}");
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IpRateLimitOptions>(options =>
 {
