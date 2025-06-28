@@ -14,16 +14,40 @@ import { useNavigate } from "react-router-dom"
 
 const apiClient = axios.create({
   baseURL: 'https://scrapeapi.ronnyjdiaz.com/',
-  timeout: 300000,
+  timeout: 900000, // 15 minutes max timeout
   withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Origin': 'https://superscrape.ronnyjdiaz.com'
   }
-})
+});
 
+// Add polling configuration calculation
+const calculatePollingConfig = (resultCount: number) => {
+  // Base time per result in seconds (adjust these values based on your scraping speed)
+  const timePerResult = 3; // seconds per result
+  const minPollingInterval = 3000; // minimum 3 seconds
+  const maxPollingInterval = 10000; // maximum 10 seconds
+  
+  // Calculate total estimated time needed
+  const estimatedTotalSeconds = resultCount * timePerResult;
+  
+  // Calculate polling interval - scales with result count but stays within bounds
+  const pollingInterval = Math.min(
+    maxPollingInterval,
+    Math.max(minPollingInterval, Math.floor(resultCount * 100))
+  );
+  
+  // Calculate max attempts based on estimated time
+  const maxAttempts = Math.ceil((estimatedTotalSeconds * 1000) / pollingInterval) + 10; // Add buffer
 
+  return {
+    pollingInterval,
+    maxAttempts,
+    estimatedMinutes: Math.ceil(estimatedTotalSeconds / 60)
+  };
+};
 
 export default function ScraperForm() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -34,71 +58,76 @@ export default function ScraperForm() {
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
     if (!searchQuery.trim()) {
-      setError("Please enter a search query")
-      return
+      setError("Please enter a search query");
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      console.log("Starting scrape with:", { searchQuery, maxResults })
+      const resultCount = parseInt(maxResults);
+      const { pollingInterval, maxAttempts, estimatedMinutes } = calculatePollingConfig(resultCount);
       
-      // Initial job submission
+      console.log("Starting scrape with:", { searchQuery, maxResults });
+      
       const jobResponse = await apiClient.post('/api/scraperapi/scrape', {
         query: searchQuery,
-        maxResults: parseInt(maxResults)
-      })
+        maxResults: resultCount
+      });
       
-      const jobId = jobResponse.data.jobId
+      const jobId = jobResponse.data.jobId;
+      let attempts = 0;
       
-      // Set polling interval for job status
-      const maxAttempts = 60 // 5 minutes (5s intervals)
-      let attempts = 0
-      
-      // Display status to user
-      setStatusMessage(`Job queued with ID: ${jobId}. Waiting for results...`)
+      setStatusMessage(
+        `Job queued with ID: ${jobId}. ` +
+        `Estimated time: ${estimatedMinutes} minutes`
+      );
       
       const checkJobStatus = async () => {
         try {
-          const statusResponse = await apiClient.get(`/api/scraperapi/job/${jobId}`)
+          const statusResponse = await apiClient.get(`/api/scraperapi/job/${jobId}`);
           
-          // If job is still processing, check again after delay
           if (!statusResponse.data.success && statusResponse.data.errorMessage?.includes("still")) {
-            attempts++
+            attempts++;
             if (attempts < maxAttempts) {
-              setTimeout(checkJobStatus, 5000) // Check every 5 seconds
-              setStatusMessage(`Job in progress (${attempts}/${maxAttempts})... Please wait.`)
+              setTimeout(checkJobStatus, pollingInterval);
+              const remainingAttempts = maxAttempts - attempts;
+              const remainingMinutes = Math.ceil((remainingAttempts * pollingInterval) / 60000);
+              
+              setStatusMessage(
+                `Job in progress (${attempts}/${maxAttempts})... ` +
+                `Estimated ${remainingMinutes} minutes remaining.`
+              );
             } else {
-              setError("Job is taking too long. Please check back later with job ID: " + jobId)
-              setLoading(false)
+              setError(
+                `Job ${jobId} is taking longer than expected. ` +
+                `You can check results later at /results/${jobId}`
+              );
+              setLoading(false);
             }
           } else {
-            // Job completed, process results
-            console.log("Scraping completed:", statusResponse.data)
-            setLoading(false)
-            
-            // Navigate to results page with the data
+            console.log("Scraping completed:", statusResponse.data);
+            setLoading(false);
             navigate('/results', { 
               state: { 
                 results: statusResponse.data,
                 query: searchQuery,
-                maxResults: parseInt(maxResults)
+                maxResults: resultCount
               }
-            })
+            });
           }
         } catch (err) {
-          console.error('Error checking job status:', err)
-          setError('Failed to check job status. Please try again later.')
-          setLoading(false)
+          console.error('Error checking job status:', err);
+          setError('Failed to check job status. Please try again later.');
+          setLoading(false);
         }
-      }
+      };
       
-      // Start checking job status
-      setTimeout(checkJobStatus, 2000)
+      setTimeout(checkJobStatus, 2000);
       
     } catch (err) {
       console.error('Scraping error:', err)
