@@ -25,22 +25,24 @@ const apiClient = axios.create({
 
 // Add polling configuration calculation
 const calculatePollingConfig = (resultCount: number) => {
-  // Base time per result in seconds (adjust these values based on your scraping speed)
-  const timePerResult = 3; // seconds per result
-  const minPollingInterval = 3000; // minimum 3 seconds
-  const maxPollingInterval = 10000; // maximum 10 seconds
+  // Adjusted base times for larger result sets
+  const timePerResult = 6; // seconds per result (increased from 3)
+  const minPollingInterval = 5000; // minimum 5 seconds (increased from 3000)
+  const maxPollingInterval = 15000; // maximum 15 seconds (increased from 10000)
   
-  // Calculate total estimated time needed
+  // Calculate total estimated time needed with buffer for larger sets
   const estimatedTotalSeconds = resultCount * timePerResult;
   
-  // Calculate polling interval - scales with result count but stays within bounds
+  // More gradual polling interval scaling
   const pollingInterval = Math.min(
     maxPollingInterval,
-    Math.max(minPollingInterval, Math.floor(resultCount * 100))
+    Math.max(minPollingInterval, Math.floor(resultCount * 50))
   );
   
-  // Calculate max attempts based on estimated time
-  const maxAttempts = Math.ceil((estimatedTotalSeconds * 1000) / pollingInterval) + 10; // Add buffer
+  // Add more buffer attempts for larger result sets
+  const baseAttempts = Math.ceil((estimatedTotalSeconds * 1000) / pollingInterval);
+  const bufferAttempts = Math.ceil(resultCount / 10); // More buffer for larger sets
+  const maxAttempts = baseAttempts + bufferAttempts;
 
   return {
     pollingInterval,
