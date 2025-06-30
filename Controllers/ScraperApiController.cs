@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using superScrape.Models;
 using superScrape.Services;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace superScrape.Controllers;
 
@@ -37,11 +39,13 @@ public class ScraperApiController : ControllerBase
 
         try
         {
-            _logger.LogInformation("API: Enqueueing scraping job for query: {Query}, MaxResults: {MaxResults}",
-                request.Query, request.MaxResults);
+            var clientId = GenerateClientId();
+            
+            _logger.LogInformation("API: Enqueueing scraping job for query: {Query}, MaxResults: {MaxResults}, ClientId: {ClientId}",
+                request.Query, request.MaxResults, clientId);
 
-            // Enqueue the job instead of running it synchronously
-            string jobId = _backgroundJobService.EnqueueScrapingJob(request.Query, request.MaxResults);
+            // Enqueue the job with client ID
+            string jobId = _backgroundJobService.EnqueueScrapingJob(request.Query, request.MaxResults, clientId);
 
             return Ok(new JobResponse 
             { 
@@ -68,5 +72,17 @@ public class ScraperApiController : ControllerBase
         }
         
         return Ok(result);
+    }
+
+    private string GenerateClientId()
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+        var sessionId = HttpContext.Session?.Id ?? Guid.NewGuid().ToString();
+        var combined = $"{ip}_{userAgent}_{sessionId}";
+        
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(combined));
+        return Convert.ToHexString(hash)[..8]; // First 8 characters
     }
 }

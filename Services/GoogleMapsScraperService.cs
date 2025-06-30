@@ -15,37 +15,44 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
 {
     private readonly ILogger<GoogleMapsScraperService> _logger;
     private readonly IWebHostEnvironment _environment;
-    
-    private readonly IUtils _utils;
-    
+    // Remove static semaphore - each instance can run independently
+    private static int _activeConnections = 0;
 
-    public GoogleMapsScraperService(ILogger<GoogleMapsScraperService> logger, IWebHostEnvironment environment, IUtils utils)
+    public GoogleMapsScraperService(ILogger<GoogleMapsScraperService> logger, IWebHostEnvironment environment)
     {
         _logger = logger;
         _environment = environment;
-        _utils = utils;
     }
-    
 
     public async Task<ScrapingResult> ScrapBusinessListingsAsync(string query, int maxResults = 100)
     {
         var result = new ScrapingResult
         {
             Query = query,
-            Success = false
+            Success = false,
+            ScrapedAt = DateTime.UtcNow,
         };
 
+        // Track connections but don't limit them with semaphore
+        Interlocked.Increment(ref _activeConnections);
+
+        IPlaywright? playwright = null;
+        IBrowser? browser = null;
         IPage? page = null;
 
         try
         {
-            _logger.LogInformation("Starting to scrape Google Maps for query: {Query}", query);
+            _logger.LogInformation("Starting to scrape Google Maps for query: {Query} (Active connections: {Count})", 
+                query, _activeConnections);
 
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            playwright = await Playwright.CreateAsync();
+            
+            // Each browser gets completely isolated resources
+            var uniqueId = Guid.NewGuid().ToString("N")[..8];
+            browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = true,
-                SlowMo = 100,
+                SlowMo = 50,
                 Args = new[] {
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
@@ -71,14 +78,15 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                     "--allow-running-insecure-content",
                     "--disable-component-update",
                     "--disable-domain-reliability",
-                    "--start-maximized",
+                    $"--crash-dumps-dir=/tmp/crashes-{uniqueId}",
+                    $"--remote-debugging-port={9222 + Random.Shared.Next(1000, 9999)}" // Unique debugging port
                 }
             });
 
             var context = await browser.NewContextAsync(new BrowserNewContextOptions
             {
                 UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                ViewportSize = new ViewportSize { Width = 1366, Height = 768 }, // More common resolution
+                ViewportSize = new ViewportSize { Width = 1366, Height = 768 },
                 Locale = "en-US",
                 TimezoneId = "America/New_York",
                 JavaScriptEnabled = true,
@@ -88,25 +96,10 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
             });
 
             page = await context.NewPageAsync();
-            page.SetDefaultTimeout(10_000);
-            page.SetDefaultNavigationTimeout(15_000);
+            page.SetDefaultTimeout(15_000);
+            page.SetDefaultNavigationTimeout(20_000);
 
-            await context.AddCookiesAsync(new[]
-            {
-                new Cookie
-                {
-                    Name = "__Secure-1PAPISID",
-                    Value = "7M-h77lBI_YIuJ23/AeO8htKoVyxMhsLvP",
-                    Domain = ".google.com",
-                    Path = "/",
-                    Secure = true,
-                    HttpOnly = false
-                },
-
-            });
-
-
-
+            // Add some randomization to avoid pattern detection
             await page.SetExtraHTTPHeadersAsync(new Dictionary<string, string>
             {
                 { "Accept-Language", "en-US,en;q=0.9" },
@@ -116,26 +109,21 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                 { "Pragma", "no-cache" }
             });
 
-
+            // Rest of your scraping logic remains the same...
             _logger.LogInformation("Establishing session by visiting Google homepage");
 
-            var maxRetries = 5;
+            var maxRetries = 3; // Reduced retries for faster processing
             var retryCount = 0;
 
             while (retryCount < maxRetries)
             {
                 try
                 {
-                    await page.GotoAsync("https://www.google.com");
-                    await page.WaitForURLAsync("https://www.google.com/", new PageWaitForURLOptions
+                    await page.GotoAsync("https://www.google.com", new PageGotoOptions
                     {
-                        Timeout = 30000,
-                        WaitUntil = WaitUntilState.DOMContentLoaded
+                        WaitUntil = WaitUntilState.DOMContentLoaded,
+                        Timeout = 20000
                     });
-                    await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-
-
-
                     await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
                     break;
                 }
@@ -149,23 +137,28 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                         throw new Exception($"Failed to load Google homepage after {maxRetries} attempts: {ex.Message}");
                     }
 
-
-                    await Task.Delay(Random.Shared.Next(2000, 5000));
+                    await Task.Delay(Random.Shared.Next(1000, 3000)); // Reduced delay
                 }
             }
 
-            var screenshot = await page.ScreenshotAsync(new() { Path = "wwwroot/screenshots/consent.png", FullPage = true, Type = ScreenshotType.Png });
-          
-            _logger.LogInformation("📸 Consent screenshot (screenshot): {screenshot}", screenshot);           
+            // Handle consent popup
+            try
+            {
+                var consentButton = await page.WaitForSelectorAsync("button:has-text('Accept all')", 
+                    new PageWaitForSelectorOptions { Timeout = 5000 });
+                if (consentButton != null)
+                {
+                    await consentButton.ClickAsync();
+                    await Task.Delay(Random.Shared.Next(1000, 2000));
+                }
+            }
+            catch (TimeoutException)
+            {
+                // No consent popup, continue
+                _logger.LogInformation("No consent popup found, continuing...");
+            }
 
-            await _utils.HandleGoogleConsentPopup(page);
-
-            await Task.Delay(Random.Shared.Next(2000, 4000));
-
-            await page.Mouse.MoveAsync(Random.Shared.Next(100, 800), Random.Shared.Next(100, 600));
-            await Task.Delay(Random.Shared.Next(500, 1500));
-
-
+            // Navigate to Maps
             var encodedQuery = HttpUtility.UrlEncode(query);
             var url = $"https://www.google.com/maps/search/{encodedQuery}";
 
@@ -179,13 +172,9 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                     await page.GotoAsync(url, new PageGotoOptions
                     {
                         WaitUntil = WaitUntilState.DOMContentLoaded,
-                        Timeout = 30000
+                        Timeout = 25000
                     });
-
-
                     await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-
-                    
                     break;
                 }
                 catch (Exception ex)
@@ -198,64 +187,28 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                         throw new Exception($"Failed to load Google Maps after {maxRetries} attempts: {ex.Message}");
                     }
 
-
-                    await Task.Delay(Random.Shared.Next(3000, 6000));
+                    await Task.Delay(Random.Shared.Next(2000, 4000));
                 }
             }
 
+            await Task.Delay(Random.Shared.Next(1000, 2000));
 
-            await Task.Delay(Random.Shared.Next(2000, 4000));
-
-
-
-            await page.Mouse.WheelAsync(0, Random.Shared.Next(100, 1000));
-            await Task.Delay(Random.Shared.Next(500, 1500));
-
-
-            IElementHandle? selectorElement = null;
-            var foundSelector = false;
-
+            // Wait for results and extract businesses
             try
             {
-                selectorElement = await page.WaitForSelectorAsync(".m6QErb", new PageWaitForSelectorOptions { Timeout = 20000 });
-                foundSelector = selectorElement != null;
+                await page.WaitForSelectorAsync(".m6QErb", new PageWaitForSelectorOptions { Timeout = 15000 });
             }
             catch (TimeoutException)
             {
-
-                if (!foundSelector)
-                {
-                    throw new TimeoutException("Could not find search results with any known selector");
-                }
+                throw new TimeoutException("Could not find search results");
             }
 
-            
-            var businesses = new List<BusinessListing>();
+            // Scroll to load more results
+            await ScrollToLoadResults(page, maxResults);
 
-            await page.Locator("[role=feed]").HoverAsync();
+            // Extract businesses
+            var businesses = await ExtractBusinessListings(page, maxResults);
 
-            // Keep scrolling until we find the end message OR have enough results
-            while (!await page.Locator(".HlvSq:has-text(\"You've reached the end of the list\")").IsVisibleAsync())
-            {
-                // Check how many business elements are currently loaded
-                var currentElementCount = await page.QuerySelectorAllAsync(".Nv2PK").ContinueWith(t => t.Result.Count);
-                
-                if (maxResults > 0 && currentElementCount >= maxResults)
-                {
-                    _logger.LogInformation("Found {Count} results, which meets the requirement of {MaxResults}. Stopping scroll.", currentElementCount, maxResults);
-                    break;
-                }
-                
-                await page.Mouse.WheelAsync(0, 800);
-                await page.WaitForTimeoutAsync(1000);
-            }
-
-            await page.WaitForTimeoutAsync(1000);
-
-            // Extract businesses after scrolling is complete
-            businesses = await ExtractBusinessListings(page, maxResults);
-
-            
             result.Businesses = businesses;
             result.TotalFound = businesses.Count;
             result.Success = true;
@@ -266,12 +219,49 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
         {
             _logger.LogError(ex, "Error scraping Google Maps for query: {Query}", query);
             result.ErrorMessage = ex.Message;
-
+        }
+        finally
+        {
+            // Cleanup
+            try
+            {
+                if (page != null) await page.CloseAsync();
+                if (browser != null) await browser.CloseAsync();
+                playwright?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error during cleanup for query: {Query}", query);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _activeConnections);
+            }
         }
 
         return result;
     }
 
+    private async Task ScrollToLoadResults(IPage page, int maxResults)
+    {
+        await page.Locator("[role=feed]").HoverAsync();
+
+        while (!await page.Locator(".HlvSq:has-text(\"You've reached the end of the list\")").IsVisibleAsync())
+        {
+            var currentElementCount = await page.QuerySelectorAllAsync(".Nv2PK").ContinueWith(t => t.Result.Count);
+            
+            if (maxResults > 0 && currentElementCount >= maxResults)
+            {
+                _logger.LogInformation("Found {Count} results, which meets the requirement of {MaxResults}. Stopping scroll.", currentElementCount, maxResults);
+                break;
+            }
+            
+            await page.Mouse.WheelAsync(0, 800);
+            await page.WaitForTimeoutAsync(800); // Reduced wait time
+        }
+
+        await page.WaitForTimeoutAsync(500);
+    }
 
 
     private async Task<List<BusinessListing>> ExtractBusinessListings(IPage page, int maxResults)
@@ -284,7 +274,7 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
         var targetResults = actualElementCount;
         _logger.LogInformation("*** business counts ****, target: {ActualCount}, actual elements: {ActualCount}",
             targetResults, actualElementCount);
-        
+
 
         try
         {
@@ -338,10 +328,10 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
                     _logger.LogInformation("Processing business {Index}/{Total}", i + 1, Math.Min(businessElements.Count, targetResults));
 
                     if (i >= businessElements.Count)
-                        {
-                            _logger.LogWarning("Index {Index} exceeds available elements {Count}. Stopping extraction.", i, businessElements.Count);
-                            break;
-                        }
+                    {
+                        _logger.LogWarning("Index {Index} exceeds available elements {Count}. Stopping extraction.", i, businessElements.Count);
+                        break;
+                    }
                     _logger.LogInformation("Processing business {Index}/{Total}", i + 1, Math.Min(businessElements.Count, targetResults));
 
                     var element = businessElements[i];
@@ -517,10 +507,5 @@ public class GoogleMapsScraperService : IGoogleMapsScraperService
     private string GenerateBusinessKey(BusinessListing business)
     {
         return $"{business.Name?.ToLowerInvariant()}|{business.Address?.ToLowerInvariant()}|{business.Phone}";
-    }
-
-    private string GetSafeFileName(string input)
-    {
-        return Regex.Replace(input, @"[<>:""/\\|?*]", "_").Replace(" ", "_");
     }
 }

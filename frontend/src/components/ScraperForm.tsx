@@ -13,13 +13,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useNavigate } from "react-router-dom"
 
 const apiClient = axios.create({
-  baseURL: 'https://scrapeapi.ronnyjdiaz.com/',
+  baseURL: import.meta.env.VITE_API_URL || 'http://[::1]:3000',
   timeout: 900000, // 15 minutes max timeout
   withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Origin': 'https://superscrape.ronnyjdiaz.com'
+    'Accept': 'application/json'
+    // Removed Origin header - browser sets this automatically
   }
 });
 
@@ -69,6 +69,7 @@ export default function ScraperForm() {
 
     setLoading(true);
     setError(null);
+    setStatusMessage(null);
 
     try {
       const resultCount = parseInt(maxResults);
@@ -92,8 +93,14 @@ export default function ScraperForm() {
       const checkJobStatus = async () => {
         try {
           const statusResponse = await apiClient.get(`/api/scraperapi/job/${jobId}`);
+          const result = statusResponse.data;
           
-          if (!statusResponse.data.success && statusResponse.data.errorMessage?.includes("still")) {
+          // Check if job is still processing
+          if (!result.success && (
+            result.errorMessage?.includes("processing") || 
+            result.errorMessage?.includes("queued") ||
+            result.query === "Processing"
+          )) {
             attempts++;
             if (attempts < maxAttempts) {
               setTimeout(checkJobStatus, pollingInterval);
@@ -102,59 +109,69 @@ export default function ScraperForm() {
               
               setStatusMessage(
                 `Job in progress (${attempts}/${maxAttempts})... ` +
+                `Status: ${result.errorMessage || 'Processing'} - ` +
                 `Estimated ${remainingMinutes} minutes remaining.`
               );
             } else {
               setError(
                 `Job ${jobId} is taking longer than expected. ` +
-                `You can check results later at /results/${jobId}`
+                `You can check results later.`
               );
               setLoading(false);
             }
-          } else {
-            console.log("Scraping completed:", statusResponse.data);
+          } else if (result.success && result.businesses) {
+            // Job completed successfully
+            console.log("Scraping completed:", result);
             setLoading(false);
+            setStatusMessage(null);
             navigate('/results', { 
               state: { 
-                results: statusResponse.data,
+                results: result,
                 query: searchQuery,
                 maxResults: resultCount
               }
             });
+          } else {
+            // Job failed
+            setError(result.errorMessage || 'Job failed with unknown error');
+            setLoading(false);
           }
         } catch (err) {
           console.error('Error checking job status:', err);
-          setError('Failed to check job status. Please try again later.');
-          setLoading(false);
+          attempts++;
+          if (attempts < maxAttempts) {
+            setTimeout(checkJobStatus, pollingInterval);
+            setStatusMessage(`Connection error, retrying... (${attempts}/${maxAttempts})`);
+          } else {
+            setError('Failed to check job status after multiple attempts.');
+            setLoading(false);
+          }
         }
       };
       
-      setTimeout(checkJobStatus, 2000);
+      // Start checking job status after a short delay
+      setTimeout(checkJobStatus, 3000);
       
     } catch (err) {
-      console.error('Scraping error:', err)
+      console.error('Scraping error:', err);
       
       if (axios.isAxiosError(err)) {
-        const axiosError = err as AxiosError<{ error?: string; message?: string }>
+        const axiosError = err as AxiosError<{ error?: string; message?: string }>;
         
         if (axiosError.response) {
-          // Server responded with error status
           const errorMessage = axiosError.response.data?.error || 
                               axiosError.response.data?.message || 
-                              `Server error: ${axiosError.response.status}`
-          setError(errorMessage)
+                              `Server error: ${axiosError.response.status}`;
+          setError(errorMessage);
         } else if (axiosError.request) {
-          // Request made but no response received
-          setError("Unable to connect to the server. Please check if the API is running.")
+          setError("Unable to connect to the server. Please check if the API is running.");
         } else {
-          // Something else happened
-          setError(axiosError.message)
+          setError(axiosError.message);
         }
       } else {
-        setError('An unexpected error occurred during scraping')
+        setError('An unexpected error occurred during scraping');
       }
-    } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
